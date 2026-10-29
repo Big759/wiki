@@ -35,12 +35,26 @@ systemctl reboot --firmware-setup
 Voici à quoi ressemble le BIOS sur un Lenovo Ideapad 5 Pro. Réinitialisez en mode configuration et redémarrez dans le système.
 
 Cependant, certaines cartes mères MSI n'ont pas de mode de configuration. Pour obtenir le même effet, réglez le mode de démarrage sécurisé (Secure Boot Mode) sur « custom » (ceci est important car avec le mode par défaut vous risquez de ne pas pouvoir démarrer CachyOS via le chargeur d'amorçage !). Ensuite, accédez à la section « gestion des clés » et suivez les deux étapes illustrées dans l'image ci-dessous :
+
+#### Réinitialisation automatique
+
+Sur certaines cartes mères Gigabyte « Réinitialiser vers le mode de configuration » (reset to setup mode) est immédiatement suivie par la boîte de dialogue « Réinitialiser sans enregistrer » :
+<ImageComponent imgsrc={import('~/assets/images/gigabyte-reset-without-saving.jpg')} />
+Il faut rejeter cette option, car elle entraînerait une réinitialisation du système, puis désactiverait le mode de configuration.
+Démarrez plutôt directement le système d'exploitation (cliquez sur « Enregistrer et quitter », puis sélectionnez votre option de démarrage).
+
+#### Pas de mode de configuration
+
+Certaines cartes mères MSI et ASUS ne disposent pas d'un mode de configuration.
+
+##### MSI
+
+Réglez le mode du démarrage sécurisé sur « custom » et sélectionnez l'option de compatibilité « sécurité maximale » (c'est important : avec le mode par défaut, vous risquez de ne pas pouvoir démarrer CachyOS à partir de votre chargeur d'amorçage !). Ensuite, accédez à la section « gestion des clés » et suivez les deux étapes illustrées dans l'image ci-dessous :
 <br />
 <ImageComponent imgsrc={import('~/assets/images/MSI-bios-secure-boot.jpg')} />
 
-Certaines cartes mères Asus présentent un comportement similaire à celui des cartes mères MSI mentionnées ci-dessus, car elles ne disposent pas d'un mode de configuration dédié.
-
-Accédez au Démarrage (Boot) → Démarrage sécurisé (Secure Boot), réglez le mode de démarrage sur Custom, puis ouvrez la gestion des clés (Key Management) et sélectionnez « Delete all Secure Boot variables ».
+##### ASUS
+Accédez au Démarrage (Boot) → Démarrage sécurisé (Secure Boot), réglez le mode de démarrage sur Custom, puis ouvrez la gestion des clés (Key Management) et sélectionnez « Supprimer toutes les variables du démarrage sécurisé » (Delete all Secure Boot variables).
 
 ## Installation de sbctl & clés d'enregistrement
 [sbctl](https://github.com/Foxboron/sbctl) est un gestionnaire de clés de démarrage sécurisé et convivial, capable de configurer le démarrage sécurisé,
@@ -105,8 +119,8 @@ sudo pacman -S sbctl
     ```
 
     :::note[Le mode de configuration indique Activé ?]
-    Si le `mode de configuration` (Setup Mode) montre qu'il est **Activé** (Enabled), accédez aux paramètres du microprogramme et **désactivez temporairement le démarrage sécurisé**. 
-    Redémarrez le système, vérifiez à nouveau l'état de sbctl, continuez avec la [Signature de l'image du noyau et du gestionnaire de démarrage](#signature-de-limage-du-noyau-et-du-gestionnaire-de-démarrage) 
+    Si le `mode de configuration` (Setup Mode) montre qu'il est **Activé** (Enabled), accédez aux paramètres du microprogramme et **désactivez temporairement le démarrage sécurisé**.
+    Redémarrez le système, vérifiez à nouveau l'état de sbctl, continuez avec la [Signature de l'image du noyau et du gestionnaire de démarrage](#signature-de-limage-du-noyau-et-du-gestionnaire-de-démarrage)
     (voir ci-dessous), puis redémarrez et réactivez le démarrage sécurisé dans les paramètres du microprogramme.
     :::
 </Steps>
@@ -280,6 +294,21 @@ System:
   TPM2 Support: yes
   Measured UKI: no
   Boot into FW: supported
+```
+
+## Fwupd
+
+Pour utiliser `fwupd` lorsque le démarrage sécurisé (Secure Boot) est activé, signez l'exécutable UEFI :
+
+```sh
+sudo sbctl sign -s -o /usr/lib/fwupd/efi/fwupdx64.efi.signed /usr/lib/fwupd/efi/fwupdx64.efi
+```
+
+Et ajoutez ce qui suit dans `/etc/fwupd/fwupd.conf` :
+
+```sh
+[uefi_capsule]
+DisableShimForSecureBoot=true
 ```
 
 ## Liens et crédits
